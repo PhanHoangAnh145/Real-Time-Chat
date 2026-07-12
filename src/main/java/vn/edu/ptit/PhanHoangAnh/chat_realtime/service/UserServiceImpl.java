@@ -1,6 +1,7 @@
 package vn.edu.ptit.PhanHoangAnh.chat_realtime.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.ptit.PhanHoangAnh.chat_realtime.dao.UserRepository;
@@ -15,16 +16,17 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
+    private final PasswordEncoder passwordEncoder;
     @Autowired
-    public UserServiceImpl (UserRepository userRepository, UserMapper userMapper) {
+    public UserServiceImpl (UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public UserDTO findUserByUsername(String username) {
-        return this.userMapper.toDTO(this.userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Invalid username")));
+    public User findUserByUsername(String username) {
+        return this.userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Invalid username"));
     }
 
     @Override
@@ -43,6 +45,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDTO saveUser(User user) {
+        user.setPassword(this.passwordEncoder.encode(user.getPassword()));
         return this.userMapper.toDTO(this.userRepository.save(user));
     }
 
@@ -51,7 +54,10 @@ public class UserServiceImpl implements UserService {
     public UserDTO updateUserById(Long id, User user) {
         User userDb = this.userRepository.findById(id).orElseThrow(() -> new RuntimeException("Invalid id"));
         userDb.setUsername(user.getUsername());
-        userDb.setPassword(user.getPassword());
+        if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
+            String encodedPassword = this.passwordEncoder.encode(user.getPassword());
+            userDb.setPassword(encodedPassword);
+        }
         userDb.setAvatar(user.getAvatar());
 
         return this.userMapper.toDTO(this.userRepository.saveAndFlush(userDb));

@@ -14,4 +14,5 @@ public class ConversationDTO {
     private String groupName;
     private boolean isGroup;
     private List<UserDTO> users;
+    private List<MessageDTO> messages;
 }

@@ -47,8 +47,4 @@ public class UserController {
         return ApiResponse.success("delete success...");
     }
 
-    @GetMapping(params = "username")
-    public ResponseEntity<ApiResponse<UserDTO>> findUserByUsername (@RequestParam String username) {
-        return ApiResponse.success(this.userService.findUserByUsername(username));
-    }
 }
