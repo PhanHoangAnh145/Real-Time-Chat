@@ -38,6 +38,9 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Message> messages;
 
+    @OneToMany(mappedBy = "user")
+    private List<RefreshToken> refreshTokens;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable (
             name = "user_role",

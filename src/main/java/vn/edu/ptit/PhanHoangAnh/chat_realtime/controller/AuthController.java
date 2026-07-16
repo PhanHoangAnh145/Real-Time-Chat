@@ -8,9 +8,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import vn.edu.ptit.PhanHoangAnh.chat_realtime.dto.ExchangeTokenResponse;
 import vn.edu.ptit.PhanHoangAnh.chat_realtime.dto.LoginRequestDTO;
 import vn.edu.ptit.PhanHoangAnh.chat_realtime.dto.LoginResponseDTO;
 import vn.edu.ptit.PhanHoangAnh.chat_realtime.entity.User;
@@ -34,17 +37,27 @@ public class AuthController {
 
         Authentication authentication = authenticationManager.authenticate(authToken);
 
-        String accessToken = this.jwtConfiguration.createAccessToken(authentication, 1L);
-
+        User currentUser = this.userService.findUserByUsername(authentication.getName());
+        String accessToken = this.jwtConfiguration.createAccessToken(authentication, currentUser.getId());
+        String refreshToken = this.jwtConfiguration.createRefreshToken(currentUser);
         LoginResponseDTO responseDTO = new LoginResponseDTO();
         responseDTO.setAccessToken(accessToken);
+        responseDTO.setRefreshToken(refreshToken);
         String scope = this.jwtConfiguration.getScope(authentication);
         responseDTO.setUser(new LoginResponseDTO.UserLogin(
-                1L,
+                currentUser.getId(),
                 authentication.getName(),
                 scope
-        ));
+                )
+        );
 
         return ApiResponse.success(responseDTO);
+    }
+
+    @PostMapping("/auth/refresh")
+    @Transactional
+    public ResponseEntity<?> postRefreshToken(@RequestParam("token") String refreshToken) {
+        ExchangeTokenResponse exchangeTokenResponse = this.jwtConfiguration.handleExchangeToken(refreshToken);
+        return ApiResponse.success(exchangeTokenResponse);
     }
 }
