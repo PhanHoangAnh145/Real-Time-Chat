@@ -1,14 +1,36 @@
 const API_BASE = '';
 
+// Lấy accessToken từ localStorage
+const getAccessToken = () => {
+    return localStorage.getItem('accessToken');
+};
+
 async function request(url, options = {}) {
     try {
+        const accessToken = getAccessToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        
+        // Thêm Authorization header nếu có accessToken
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
+
         const response = await fetch(`${API_BASE}${url}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
+            headers,
             ...options
         });
+        
+        // Nếu response status 401 → token hết hạn, logout
+        if (response.status === 401) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            window.location.reload();
+            throw new Error('Unauthorized');
+        }
+
         const data = await response.json();
         return data;
     } catch (error) {
@@ -18,7 +40,9 @@ async function request(url, options = {}) {
 }
 
 export const authApi = {
-    login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) })
+    login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+    logout: () => request('/auth/logout', { method: 'POST' }),
+    getAccount: () => request('/auth/account')
 };
 
 export const userApi = {

@@ -14,12 +14,11 @@ function Login({ onLogin }) {
 
     try {
       const response = await authApi.login({ username, password });
-      if (response.data && response.data.user) {
-        onLogin({
-          id: response.data.user.id,
-          username: response.data.user.username,
-          role: response.data.user.role
-        });
+      if (response.data && response.data.user && response.data.accessToken) {
+        // Lưu accessToken và user vào localStorage
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        onLogin(response.data.user);
       } else {
         setError('Đăng nhập thất bại!');
       }
@@ -56,12 +55,12 @@ function Login({ onLogin }) {
             <h2>Member Login</h2>
             <form onSubmit={handleLogin}>
               <div className="input-group">
-                <div className="input-icon">📧</div>
+                <div className="input-icon">👤</div>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Email"
+                  placeholder="Username"
                   required
                 />
               </div>
